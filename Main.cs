@@ -7,20 +7,6 @@ using LoadsonAPI;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-//TODO:
-// ✅ filter the groundColliders better -> no lava ,glass maybe, triggers i think are there too
-// ✅ randompos for objects -> guns, ❎enemies❎ and ...well other objects like the screen and tables
-// ✅ allow random starter gun
-// ✅ mindistance !! so the goal and start arent just 1 meter apart
-// ✅ goal compass maybe to point to goal if random goal is on
-// ✅ snappy rotations -> only 90degree rotations
-// ✅ option to spawn additional objects randomly (towers, tables maybe idk, blocks)
-// ✅ for the prop random shit -> ignore tables by looking at the Object.gameObject.name contains Table
-// ✅ save the seetings string in storage
-// ✅ option to let walls get swapped around positions
-// ✅ add limit to the tries a doRandomPosForObject call has, cause it could get stuck forever
-
-
  
 namespace Jannik_Randomizer {
     public class Main : Mod {
@@ -268,7 +254,7 @@ namespace Jannik_Randomizer {
 
             if (randomPosWalls|| randomRotWalls||randomScaleWalls|| randomSwapWalls) {
                 foreach (BoxCollider boxcollider in groundColliders) {
-                    if (randomPosWalls && random.NextDouble() < Mathf.Lerp(0.1f, 1f, chaos / 25f)) {
+                    if (randomPosWalls && randomChanceWithChaos()) {
                         if (snapToGrid) {
                             boxcollider.gameObject.transform.Translate(   random.Next(-2 * (int)chaos, 2 * (int)chaos)
                                                                         , random.Next(-2 * (int)chaos, 2 * (int)chaos)
@@ -279,7 +265,7 @@ namespace Jannik_Randomizer {
                                                                         , (float)(random.NextDouble() - 0.5) * 15f * chaos);
                         }
                     }
-                    if (randomRotWalls && random.NextDouble() < Mathf.Lerp(0.1f, 1f, chaos / 25f)) {
+                    if (randomRotWalls && randomChanceWithChaos()) {
                         if (snapToGrid) {
                             boxcollider.gameObject.transform.Rotate(  random.Next(-4, 4) * 90f
                                                                     , random.Next(-4, 4) * 90f
@@ -290,7 +276,7 @@ namespace Jannik_Randomizer {
                                                                     , (float)(random.NextDouble() - 0.5) * 10f * chaos);
                         }
                     }
-                    if (randomScaleWalls && random.NextDouble() <  Mathf.Lerp(0.1f, 1f, chaos / 25f)) {
+                    if (randomScaleWalls && randomChanceWithChaos()) {
                         Vector3 scale = boxcollider.gameObject.transform.localScale;
                         if (demoncubed) {
                             boxcollider.gameObject.transform.localScale = new Vector3(Mathf.Max(0, 5f, scale.x + (random.Next(-1, 1) * chaos))
@@ -302,7 +288,7 @@ namespace Jannik_Randomizer {
                                                                                     , Mathf.Max(1, scale.z + random.Next(-1 * (int)chaos, 1 * (int)chaos)));
                         }
                     }
-                    if (randomSwapWalls && random.NextDouble() < Mathf.Lerp(0.1f, 1f, chaos / 25f) / 2) {
+                    if (randomSwapWalls && randomChanceWithChaos(2)) {
                         BoxCollider selSpawnBoxCollider = groundColliders[random.Next(0, groundColliders.Count)];
                         Vector3 temp = boxcollider.transform.position;
                         boxcollider.transform.position = selSpawnBoxCollider.transform.position;
@@ -429,16 +415,11 @@ namespace Jannik_Randomizer {
                 }
             }
 
-            /*Coroutines.StartCoroutine(secondRanomizerPart(groundColliders));*/
         }
 
-        /*private IEnumerator secondRanomizerPart(List<BoxCollider> groundColliders) {
-            
-
-        }*/
 
         private bool randomChanceWithChaos(float div=1) {
-            return random.NextDouble() < Mathf.Lerp(0.1f, 1f, Mathf.Min(1, chaos / 25f)/ div);
+            return random.NextDouble() < Mathf.Lerp(0.1f, 1f, Mathf.Min(1, chaos / 25f))/div;
         }
 
         private void tryDoRandomPosForObject(List<BoxCollider> groundColliders, Transform t, Func<bool> f) {
