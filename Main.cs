@@ -562,7 +562,7 @@ namespace Jannik_Randomizer {
             }
 
             r.Set(260, r.y - 3, 140, r.height);
-            float newchaos = GUI.HorizontalSlider(r, chaos, 1f, 40.0f);
+            float newchaos = GUI.HorizontalSlider(r, chaos, 1f, 25.0f);
             if (newchaos != chaos) {
                 chaos = (float)Math.Round(newchaos);
                 createSettingsString();
