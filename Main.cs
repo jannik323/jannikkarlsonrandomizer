@@ -1,15 +1,20 @@
 ﻿using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.Text;
 using Loadson;
 using LoadsonAPI;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
- 
+
+
 namespace Jannik_Randomizer {
     public class Main : Mod {
+        private readonly string version = "v1.2";
+        private readonly string settingsFormatVersion = "v1.1";
+
+
         private System.Random random;
         
         private float lastTimeScale = 1;
@@ -18,6 +23,8 @@ namespace Jannik_Randomizer {
         private bool lastSlowMo = false;
 
         private bool windowOpen= false;
+        private Rect winrect = new Rect(80, 80, 600, 530);
+        private GameObject blockPanel;
 
         private string settingsString; 
 
@@ -33,37 +40,48 @@ namespace Jannik_Randomizer {
         private bool randomStartWeapon = false;
         private bool randomSpawn = false;
         private bool randomGoal = true;
-        private bool demoncubed = false;
+        private bool legacyBug = false;
+        private bool compass = false;
+
+        private LineRenderer compassLineRenderer;
+
         private readonly float minGoalDistance = 25;
         private int maxTries = 1000;
-        private bool compass = false;
-        private LineRenderer lineRenderer;
+
         private Camera freeCam;
         private bool freeCamOn = false;
 
 
         private int windowID;
+
         private Material groundMaterial;
-
-
         private GameObject player;
         private GameObject milk;
+
         public override void OnEnable() {
             SceneManager.sceneLoaded += SceneManager_sceneLoaded;
-            
+
             seed = Environment.TickCount;
             windowID = ImGUI_WID.GetWindowId();
+
+            LoadPlayerPrefSettingsString();
+        }
+
+        private void LoadPlayerPrefSettingsString() {
+            // for making sure all the settingstrings have the same format
+            // like en-US using "." for decimals, but de-DE uses "," for example.
             System.Globalization.CultureInfo ci = new System.Globalization.CultureInfo("en-US");
             System.Threading.Thread.CurrentThread.CurrentCulture = ci;
             System.Threading.Thread.CurrentThread.CurrentUICulture = ci;
+
             string loadedsettingsString = PlayerPrefs.GetString("jannik_randomizer_setting", "none");
-            if(loadedsettingsString == "none") {
+            if (loadedsettingsString == "none") {
                 Loadson.Console.Log("loading from PlayerPrefs failed!: nothin in there");
-                createSettingsString();
-            }else if (!tryParseSettingsString(loadedsettingsString)) {
+                CreateSettingsString();
+            } else if (!TryParseSettingsString(loadedsettingsString)) {
                 Loadson.Console.Log("loading from PlayerPrefs failed!: this shit aint right");
-                Loadson.Console.Log("take a lookie: "+loadedsettingsString);
-                createSettingsString();
+                Loadson.Console.Log("take a lookie: " + loadedsettingsString);
+                CreateSettingsString();
             } else {
                 settingsString = loadedsettingsString;
             }
@@ -75,146 +93,135 @@ namespace Jannik_Randomizer {
         }
 
         public override void Update(float deltaTime) {
-            if(Input.GetKeyDown(KeyCode.M)){
-                changeWindowOpen(!windowOpen);
+            if(!freeCamOn && Input.GetKeyDown(KeyCode.M)){
+                ChangeWindowVisibility(!windowOpen);
             }
             if (freeCamOn && Input.GetKeyDown(KeyCode.Escape)) {
-                turnOffFreeCam();
+                TurnOffFreeCam();
             }
             if (windowOpen) {
                 Time.timeScale = 0;
             }
             if (compass) {
-                lineRenderer.SetPosition(0, player.transform.position);
+                compassLineRenderer.SetPosition(0, player.transform.position);
             }
 
             if (freeCamOn&&!windowOpen) {
-                if (Input.GetKey(KeyCode.W)) {
-                    freeCam.transform.position += freeCam.transform.forward;
-                }
-                if (Input.GetKey(KeyCode.S)) {
-                    freeCam.transform.position -= freeCam.transform.forward;
-                }
-                if (Input.GetKey(KeyCode.D)) {
-                    freeCam.transform.position += freeCam.transform.right;
-                }
-                if (Input.GetKey(KeyCode.A)) {
-                    freeCam.transform.position -= freeCam.transform.right;
-                }
-                if (Input.GetKey(KeyCode.E)) {
-                    freeCam.transform.position += freeCam.transform.up;
-                }
-                if (Input.GetKey(KeyCode.Q)) {
-                    freeCam.transform.position -= freeCam.transform.up;
-                }
-                Look();
+                UpdateFreeCam();
             }
 
-            if (Input.GetKeyDown(KeyCode.Alpha1))
-            {
-                SceneManager.LoadScene(2);
-                Game.Instance.StartGame();
+            if (Input.GetKeyDown(KeyCode.Alpha1)) {
+                StartLevel(2);
             }
-            if (Input.GetKeyDown(KeyCode.Alpha2))
-            {
-                SceneManager.LoadScene(3);
-                Game.Instance.StartGame();
+            if (Input.GetKeyDown(KeyCode.Alpha2)) {
+                StartLevel(3);
             }
-            if (Input.GetKeyDown(KeyCode.Alpha3))
-            {
-                SceneManager.LoadScene(4);
-                Game.Instance.StartGame();
+            if (Input.GetKeyDown(KeyCode.Alpha3)) {
+                StartLevel(4);
             }
-            if (Input.GetKeyDown(KeyCode.Alpha4))
-            {
-                SceneManager.LoadScene(5);
-                Game.Instance.StartGame();
+            if (Input.GetKeyDown(KeyCode.Alpha4)) {
+                StartLevel(5);
             }
-            if (Input.GetKeyDown(KeyCode.Alpha5))
-            {
-                SceneManager.LoadScene(6);
-                Game.Instance.StartGame();
+            if (Input.GetKeyDown(KeyCode.Alpha5)) {
+                StartLevel(6);
             }
-            if (Input.GetKeyDown(KeyCode.Alpha6))
-            {
-                SceneManager.LoadScene(7);
-                Game.Instance.StartGame();
+            if (Input.GetKeyDown(KeyCode.Alpha6)) {
+                StartLevel(7);
             }
-            if (Input.GetKeyDown(KeyCode.Alpha7))
-            {
-                SceneManager.LoadScene(8);
-                Game.Instance.StartGame();
+            if (Input.GetKeyDown(KeyCode.Alpha7)) {
+                StartLevel(8);
             }
-            if (Input.GetKeyDown(KeyCode.Alpha8))
-            {
-                SceneManager.LoadScene(9);
-                Game.Instance.StartGame();
+            if (Input.GetKeyDown(KeyCode.Alpha8)) {
+                StartLevel(9);
             }
-            if (Input.GetKeyDown(KeyCode.Alpha9))
-            {
-                SceneManager.LoadScene(10);
-                Game.Instance.StartGame();
+            if (Input.GetKeyDown(KeyCode.Alpha9)) {
+                StartLevel(10);
             }
-            if (Input.GetKeyDown(KeyCode.Alpha0))
-            {
-                SceneManager.LoadScene(11);
-                Game.Instance.StartGame();
+            if (Input.GetKeyDown(KeyCode.Alpha0)) {
+                StartLevel(11);
             }
-            if (Input.GetKeyDown(KeyCode.Minus))
-            {
-                SceneManager.LoadScene(12);
-                Game.Instance.StartGame();
+            if (Input.GetKeyDown(KeyCode.Minus)) {
+                StartLevel(12);
             }
-            if (Input.GetKeyDown(KeyCode.R))
-            {
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-                Game.Instance.StartGame();
+            if (Input.GetKeyDown(KeyCode.R)) {
+                StartLevel(SceneManager.GetActiveScene().buildIndex);
             }
-            if (Input.GetKeyDown(KeyCode.N))
-            {
-                seed = UnityEngine.Random.Range(0, Int32.MaxValue);
-                createSettingsString();
-                changeWindowOpen(false);
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-                Game.Instance.StartGame();
+            if (Input.GetKeyDown(KeyCode.K)) {
+                Reseed();
+                ChangeWindowVisibility(false);
+                StartLevel(SceneManager.GetActiveScene().buildIndex);
             }
         }
 
-        private void turnOffFreeCam() {
+        private void Reseed() {
+            seed = UnityEngine.Random.Range(0, int.MaxValue);
+            CreateSettingsString();
+        }
+
+        private void StartLevel(int index) {
+            SceneManager.LoadScene(index);
+            if (index == 1) return;
+            Game.Instance.StartGame();
+        }
+
+        private void TurnOffFreeCam() {
             freeCamOn = false;
             freeCam.gameObject.SetActive(false);
             Time.timeScale = lastTimeScale;
             Game.Instance.playing = true;
             Game.Instance.done = false;
-            changeWindowOpen(true);
+            ChangeWindowVisibility(true);
         }
 
-        private void turnOnFreeCam() {
+        private void TurnOnFreeCam() {
             freeCamOn = true;
             freeCam.gameObject.SetActive(true);
             freeCam.gameObject.transform.position = PlayerMovement.Instance.playerCam.transform.position;
             freeCam.gameObject.transform.rotation = PlayerMovement.Instance.playerCam.transform.rotation;
             freeCam.fieldOfView = SaveManager.Instance.state.fov;
-            changeWindowOpen(false);
+            ChangeWindowVisibility(false);
             lastTimeScale = Time.timeScale;
             Time.timeScale = 0;
             Game.Instance.playing = false;
             Game.Instance.done = true;
         }
-
-        private void Look() {
+        private void UpdateFreeCam() {
+            if (Input.GetKey(KeyCode.W)) {
+                freeCam.transform.position += freeCam.transform.forward;
+            }
+            if (Input.GetKey(KeyCode.S)) {
+                freeCam.transform.position -= freeCam.transform.forward;
+            }
+            if (Input.GetKey(KeyCode.D)) {
+                freeCam.transform.position += freeCam.transform.right;
+            }
+            if (Input.GetKey(KeyCode.A)) {
+                freeCam.transform.position -= freeCam.transform.right;
+            }
+            if (Input.GetKey(KeyCode.E)) {
+                freeCam.transform.position += freeCam.transform.up;
+            }
+            if (Input.GetKey(KeyCode.Q)) {
+                freeCam.transform.position -= freeCam.transform.up;
+            }
+            FreeCamLook();
+        }
+        private void FreeCamLook() {
             float mouseX = Input.GetAxis("Mouse X") * 50f * Time.fixedDeltaTime ;
             float mouseY = Input.GetAxis("Mouse Y") * 50f * Time.fixedDeltaTime ;
             freeCam.transform.localRotation = Quaternion.Euler(freeCam.transform.localRotation.eulerAngles.x - mouseY, freeCam.transform.localRotation.eulerAngles.y + mouseX, 0);
         }
-
-        private string settingsFormatVersion = "v1.1";
-        private void createSettingsString() {
-            string rawString = $"{settingsFormatVersion}|{seed}|{chaos}|{(snapToGrid?"1":"0")}|{(randomPosWalls?"1":"0")}|{(randomRotWalls ? "1":"0")}|{(randomScaleWalls ? "1":"0")}|{(randomSwapWalls ? "1":"0")}|{(randomPosProps ? "1":"0")}|{(spawnRandomWalls ? "1":"0")}|{(randomStartWeapon ? "1":"0")}|{(randomSpawn ? "1":"0")}|{(randomGoal ? "1":"0")}|{(compass ? "1":"0")}|{(demoncubed ? "1":"0")}";
+        private void CreateFreeCam() {
+            GameObject cgm = new GameObject();
+            freeCam = cgm.AddComponent<Camera>();
+            freeCam.gameObject.SetActive(false);
+        }
+        private void CreateSettingsString() {
+            string rawString = $"{settingsFormatVersion}|{seed}|{chaos}|{(snapToGrid?"1":"0")}|{(randomPosWalls?"1":"0")}|{(randomRotWalls ? "1":"0")}|{(randomScaleWalls ? "1":"0")}|{(randomSwapWalls ? "1":"0")}|{(randomPosProps ? "1":"0")}|{(spawnRandomWalls ? "1":"0")}|{(randomStartWeapon ? "1":"0")}|{(randomSpawn ? "1":"0")}|{(randomGoal ? "1":"0")}|{(compass ? "1":"0")}|{(legacyBug ? "1":"0")}";
             settingsString = Convert.ToBase64String(Encoding.UTF8.GetBytes(rawString));
         }
 
-        private bool tryParseSettingsString(string sString) {
+        private bool TryParseSettingsString(string sString) {
             try {
                 string nstring = Encoding.UTF8.GetString(Convert.FromBase64String(sString));
                 string[] split = nstring.Split('|');
@@ -233,7 +240,7 @@ namespace Jannik_Randomizer {
                     randomSpawn = bool.Parse(split[11]);
                     randomGoal = bool.Parse(split[12]);
                     compass = bool.Parse(split[13]);
-                    demoncubed = true;
+                    legacyBug = true;
                     maxTries = 50;
                     return true;
                 } else if (split.Length != 15 || split[0] != settingsFormatVersion) {
@@ -254,7 +261,7 @@ namespace Jannik_Randomizer {
                 randomSpawn = split[11] == "1";
                 randomGoal = split[12] == "1";
                 compass = split[13] == "1";
-                demoncubed = split[14] == "1";
+                legacyBug = split[14] == "1";
                 return true;
             } catch (Exception e) {
                 Loadson.Console.Log("settings parsing error: " + e.Message);
@@ -262,27 +269,20 @@ namespace Jannik_Randomizer {
             }
         }
 
-        private void changeWindowOpen(bool state) {
+        private void ChangeWindowVisibility(bool state) {
             windowOpen = state;
             if (windowOpen) {
-                if (!Game.Instance.done) {
-                    if (UIManger.Instance.deadUI.activeSelf) {
-                        UIManger.Instance.deadUI.SetActive(false);
-                        UIManger.Instance.DeadUI(false);
-                    }
-                    lastTimeScale = Time.timeScale;
-                    lastlockState = Cursor.lockState;
-                    lastvisible = Cursor.visible;
-                    lastSlowMo = GameState.Instance.slowmo;
-                    Cursor.lockState = CursorLockMode.None;
-                    Cursor.visible = true;
-                    Time.timeScale = 0;
-                    Game.Instance.playing = false;
-                    Game.Instance.done = true;
-                    GameState.Instance.slowmo = false;
-                } else {
-                    windowOpen = false;
-                }
+                lastTimeScale = Time.timeScale;
+                lastlockState = Cursor.lockState;
+                lastvisible = Cursor.visible;
+                lastSlowMo = GameState.Instance.slowmo;
+                Cursor.lockState = CursorLockMode.None;
+                Cursor.visible = true;
+                Time.timeScale = 0;
+                Game.Instance.playing = false;
+                Game.Instance.done = true;
+                GameState.Instance.slowmo = false;
+                blockPanel.SetActive(true);
             } else {
                 Cursor.visible = lastvisible;
                 Cursor.lockState = lastlockState;
@@ -290,106 +290,62 @@ namespace Jannik_Randomizer {
                 GameState.Instance.slowmo = lastSlowMo;
                 Game.Instance.playing = true;
                 Game.Instance.done = false;
+                blockPanel.SetActive(false);
             }
+        }
+        private void CreateBlockPanel() {
+            DefaultControls.Resources uiResources = new DefaultControls.Resources();
+            uiResources.background = uiResources.standard;
+            blockPanel = DefaultControls.CreatePanel(uiResources);
+            blockPanel.SetActive(false);
+            blockPanel.transform.SetParent(UIManger.Instance.transform);
+            RectTransform rect = blockPanel.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.localPosition = Vector3.zero;
+            rect.localScale = Vector3.one;
+            rect.offsetMin = new Vector2(0, 0);
+            rect.offsetMax = new Vector2(0, 0);
+            rect.sizeDelta = new Vector2(0, 0);
         }
 
         private void SceneManager_sceneLoaded(Scene scene,LoadSceneMode loadSceneMode) {
-            if (scene.buildIndex ==  1&&groundMaterial==null) {
+            freeCamOn = false;
+
+            // fetch default ground material for random spawned walls to use
+            if (scene.buildIndex == 1 && groundMaterial == null) {
                 groundMaterial = GameObject.FindObjectOfType<MeshRenderer>().material;
                 return;
             }
+
+            CreateBlockPanel();
+
             if (scene.buildIndex < 2) return;
 
             player = PlayerMovement.Instance.gameObject;
             milk = Object.FindObjectOfType<Milk>().gameObject;
 
             random = new System.Random(seed);
+            CreateFreeCam();
 
+            //tutorial fixing
             if (scene.buildIndex == 2) {
-                GameObject.Find("RespawnZone").SetActive(false);
-                GameObject.Find("Cube (22)").SetActive(false);
+                GameObject.Find("RespawnZone").SetActive(false); // deactivate respawn zones
+                GameObject.Find("Cube (22)").SetActive(false);   // deactivate duplicate cube
             }
 
-            GameObject cgm = new GameObject();
-            freeCam = cgm.AddComponent<Camera>();
-            freeCam.gameObject.SetActive(false);
+            List<BoxCollider> groundColliders = getGroundColliders();
 
-            BoxCollider[] boxcolliders = Object.FindObjectsOfType<BoxCollider>();
-            List<BoxCollider> groundColliders = new List<BoxCollider>();
-            foreach (BoxCollider boxcollider in boxcolliders) {
-                if (!boxcollider.isTrigger && boxcollider.gameObject.layer == 9 && boxcollider.GetComponent<Lava>() == null) {
-                    groundColliders.Add(boxcollider);
-                }
-            }
-
-
-            if (randomPosWalls|| randomRotWalls||randomScaleWalls|| randomSwapWalls) {
+            if (randomPosWalls || randomRotWalls || randomScaleWalls || randomSwapWalls) {
                 foreach (BoxCollider boxcollider in groundColliders) {
-                    if (randomPosWalls && randomChanceWithChaos()) {
-                        if (snapToGrid) {
-                            boxcollider.gameObject.transform.Translate(   random.Next(-2 * (int)chaos, 2 * (int)chaos)
-                                                                        , random.Next(-2 * (int)chaos, 2 * (int)chaos)
-                                                                        , random.Next(-2 * (int)chaos, 2 * (int)chaos));
-                        } else {
-                            boxcollider.gameObject.transform.Translate(   (float)(random.NextDouble() - 0.5) * 15f * chaos
-                                                                        , (float)(random.NextDouble() - 0.5) * 15f * chaos
-                                                                        , (float)(random.NextDouble() - 0.5) * 15f * chaos);
-                        }
-                    }
-                    if (randomRotWalls && randomChanceWithChaos()) {
-                        if (snapToGrid) {
-                            boxcollider.gameObject.transform.Rotate(  random.Next(-4, 4) * 90f
-                                                                    , random.Next(-4, 4) * 90f
-                                                                    , random.Next(-4, 4) * 90f);
-                        } else {
-                            boxcollider.gameObject.transform.Rotate(  (float)(random.NextDouble() - 0.5) * 10f * chaos
-                                                                    , (float)(random.NextDouble() - 0.5) * 10f * chaos
-                                                                    , (float)(random.NextDouble() - 0.5) * 10f * chaos);
-                        }
-                    }
-                    if (randomScaleWalls && randomChanceWithChaos()) {
-                        Vector3 scale = boxcollider.gameObject.transform.localScale;
-                        if (demoncubed) {
-                            boxcollider.gameObject.transform.localScale = new Vector3(Mathf.Max(0, 5f, scale.x + (random.Next(-1, 1) * chaos))
-                                                                                    , Mathf.Max(0, 5f, scale.x + (random.Next(-1, 1) * chaos))
-                                                                                    , Mathf.Max(0, 5f, scale.x + (random.Next(-1, 1) * chaos)));
-                        } else {
-                            boxcollider.gameObject.transform.localScale = new Vector3(Mathf.Max(1, scale.x + random.Next(-1 * (int)chaos, 1 * (int)chaos))
-                                                                                    , Mathf.Max(1, scale.y + random.Next(-1 * (int)chaos, 1 * (int)chaos))
-                                                                                    , Mathf.Max(1, scale.z + random.Next(-1 * (int)chaos, 1 * (int)chaos)));
-                        }
-                    }
-                    if (randomSwapWalls && randomChanceWithChaos(2)) {
-                        BoxCollider selSpawnBoxCollider = groundColliders[random.Next(0, groundColliders.Count)];
-                        Vector3 temp = boxcollider.transform.position;
-                        boxcollider.transform.position = selSpawnBoxCollider.transform.position;
-                        selSpawnBoxCollider.transform.position = temp;
-                        if (!demoncubed) {
-                            selSpawnBoxCollider.enabled = false;
-                            selSpawnBoxCollider.enabled = true;
-                        }
-                    }
-                    if (!demoncubed) {
-                        boxcollider.enabled = false;
-                        boxcollider.enabled = true;
-                    }
-
+                    RandomizeWall(boxcollider, groundColliders);
                 }
             }
-
 
 
             if (spawnRandomWalls) {
-                for (int i = 0; i < random.Next((int)chaos / 2, (int)chaos*2); i++) {
-                    BoxCollider selSpawnBoxCollider = groundColliders[random.Next(0, groundColliders.Count)];
-                    GameObject gm = LoadsonAPI.PrefabManager.NewCube();
-                    gm.GetComponent<MeshRenderer>().material = groundMaterial;
-                    gm.transform.position = selSpawnBoxCollider.transform.position;
-
-                    gm.gameObject.transform.Translate(random.Next(-40, 40) , random.Next(-40, 40), random.Next(-40, 40));
-                    gm.gameObject.transform.Rotate(random.Next(-4, 4) * 90f, (random.Next(-4, 4)) * 90f, (random.Next(-4, 4)) * 90f);
-                    gm.gameObject.transform.localScale = new Vector3(random.Next(1, 30), random.Next(1, 30), random.Next(1, 30));
-                    groundColliders.Add(gm.GetComponent<BoxCollider>());
+                for (int i = 0; i < random.Next((int)chaos / 2, (int)chaos * 2); i++) {
+                    createRandomWall(groundColliders);
                 }
             }
 
@@ -398,7 +354,7 @@ namespace Jannik_Randomizer {
                 Object[] props = Object.FindObjectsOfType<global::Object>();
                 foreach (global::Object prop in props) {
                     if (prop.transform.parent == null || !prop.transform.parent.gameObject.name.Contains("Table")) {
-                        tryDoRandomPosForObject(groundColliders, prop.gameObject.transform);
+                        TryDoRandomPosForObject(groundColliders, prop.gameObject.transform);
                     };
 
                 }
@@ -406,114 +362,202 @@ namespace Jannik_Randomizer {
                 Pickup[] pickups = Object.FindObjectsOfType<Pickup>();
                 foreach (Pickup pickup in pickups) {
                     if (pickup.transform.parent == null || pickup.transform.parent.gameObject.name != "WeaponPos") {
-                        tryDoRandomPosForObject(groundColliders, pickup.gameObject.transform);
+                        TryDoRandomPosForObject(groundColliders, pickup.gameObject.transform);
                     };
                 }
 
             }
 
             if (randomSpawn) {
-                tryDoRandomPosForObject(groundColliders, player.transform, () => {
+                TryDoRandomPosForObject(groundColliders, player.transform, () => {
                     return Vector3.Distance(player.transform.position, milk.transform.position) < minGoalDistance;
                 });
-                PlayerMovement.Instance.rb.velocity = Vector3.zero;
             }
 
             if (randomGoal) {
-                tryDoRandomPosForObject(groundColliders, milk.transform, () => {
+                TryDoRandomPosForObject(groundColliders, milk.transform, () => {
                     return Vector3.Distance(player.transform.position, milk.transform.position) < minGoalDistance;
                 });
             }
 
             if (compass) {
-                GameObject gm = new GameObject();
-                lineRenderer = gm.AddComponent<LineRenderer>();
-                lineRenderer.useWorldSpace = true;
-                lineRenderer.startColor = Color.green;
-                lineRenderer.endColor = Color.blue;
-                lineRenderer.SetPosition(0, player.transform.position);
-                lineRenderer.SetPosition(1, milk.transform.position);
-                lineRenderer.startWidth = 0.1f;
-                lineRenderer.endWidth = 0.2f;
-                lineRenderer.receiveShadows = false;
-                lineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-                lineRenderer.material = new Material(Shader.Find("Particles/Standard Unlit"));
-                lineRenderer.material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-                lineRenderer.material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-                lineRenderer.material.SetInt("_ZWrite", 0);
-                lineRenderer.material.DisableKeyword("_ALPHATEST_ON");
-                lineRenderer.material.EnableKeyword("_ALPHABLEND_ON");
-                lineRenderer.material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-                lineRenderer.material.renderQueue = 3000;
-                lineRenderer.material.SetColor("_Color", new Color(1f, 1f, 1f, 0.3f));
-                lineRenderer.numCapVertices = 4;
+                CreateCompass();
             }
 
             if (randomStartWeapon) {
-                if (PlayerMovement.Instance.spawnWeapon != null) {
-                    Object.Destroy(PlayerMovement.Instance.spawnWeapon);
-                }
-                switch (random.Next(18)) {
-                    case 0:
-                    case 1:
-                    case 2:
-                    case 4:
-                    case 5:
-                        PlayerMovement.Instance.spawnWeapon = null;
-                        break;
-                    case 6:
-                    case 7:
-                    case 8:
-                    case 9:
-                        PlayerMovement.Instance.spawnWeapon = LoadsonAPI.PrefabManager.NewPistol();
-                        break;
-                    case 10:
-                    case 11:
-                    case 12:
-                    case 13:
-                        PlayerMovement.Instance.spawnWeapon = LoadsonAPI.PrefabManager.NewAk47();
-                        break;
-                    case 14:
-                    case 15:
-                        PlayerMovement.Instance.spawnWeapon = LoadsonAPI.PrefabManager.NewShotgun();
-                        break;
-                    case 16:
-                        PlayerMovement.Instance.spawnWeapon = LoadsonAPI.PrefabManager.NewGrappler();
-                        break;
-                    case 17:
-                        PlayerMovement.Instance.spawnWeapon = LoadsonAPI.PrefabManager.NewBoomer();
-                        break;
-                }
+                PickRandomStartWeapon();
             }
 
         }
 
+        private static List<BoxCollider> getGroundColliders() {
+            BoxCollider[] boxcolliders = Object.FindObjectsOfType<BoxCollider>();
+            List<BoxCollider> groundColliders = new List<BoxCollider>();
+            foreach (BoxCollider boxcollider in boxcolliders) {
+                if (!boxcollider.isTrigger && boxcollider.gameObject.layer == 9 && boxcollider.GetComponent<Lava>() == null) {
+                    groundColliders.Add(boxcollider);
+                }
+            }
 
-        private bool randomChanceWithChaos(float div=1) {
+            return groundColliders;
+        }
+
+        private void createRandomWall(List<BoxCollider> groundColliders) {
+            BoxCollider selSpawnBoxCollider = groundColliders[random.Next(0, groundColliders.Count)];
+            GameObject gm = LoadsonAPI.PrefabManager.NewCube();
+            gm.GetComponent<MeshRenderer>().material = groundMaterial;
+            gm.transform.position = selSpawnBoxCollider.transform.position;
+
+            gm.gameObject.transform.Translate(random.Next(-40, 40), random.Next(-40, 40), random.Next(-40, 40));
+            gm.gameObject.transform.Rotate(random.Next(-4, 4) * 90f, (random.Next(-4, 4)) * 90f, (random.Next(-4, 4)) * 90f);
+            gm.gameObject.transform.localScale = new Vector3(random.Next(1, 30), random.Next(1, 30), random.Next(1, 30));
+            groundColliders.Add(gm.GetComponent<BoxCollider>());
+        }
+
+        private void RandomizeWall(BoxCollider boxcollider, List<BoxCollider> groundColliders) {
+            if (randomPosWalls && RandomChanceWithChaos()) {
+                if (snapToGrid) {
+                    boxcollider.gameObject.transform.Translate(
+                        random.Next(-2 * (int)chaos, 2 * (int)chaos), 
+                        random.Next(-2 * (int)chaos, 2 * (int)chaos), 
+                        random.Next(-2 * (int)chaos, 2 * (int)chaos));
+                } else {
+                    boxcollider.gameObject.transform.Translate(
+                        (float)(random.NextDouble() - 0.5) * 15f * chaos, 
+                        (float)(random.NextDouble() - 0.5) * 15f * chaos, 
+                        (float)(random.NextDouble() - 0.5) * 15f * chaos);
+                }
+            }
+            if (randomRotWalls && RandomChanceWithChaos()) {
+                if (snapToGrid) {
+                    boxcollider.gameObject.transform.Rotate(
+                        random.Next(-4, 4) * 90f, 
+                        random.Next(-4, 4) * 90f, 
+                        random.Next(-4, 4) * 90f);
+                } else {
+                    boxcollider.gameObject.transform.Rotate(
+                        (float)(random.NextDouble() - 0.5) * 10f * chaos, 
+                        (float)(random.NextDouble() - 0.5) * 10f * chaos,
+                        (float)(random.NextDouble() - 0.5) * 10f * chaos);
+                }
+            }
+            if (randomScaleWalls && RandomChanceWithChaos()) {
+                Vector3 scale = boxcollider.gameObject.transform.localScale;
+                if (legacyBug) {
+                    boxcollider.gameObject.transform.localScale = new Vector3(
+                        Mathf.Max(0, 5f, scale.x + (random.Next(-1, 1) * chaos)), 
+                        Mathf.Max(0, 5f, scale.x + (random.Next(-1, 1) * chaos)), 
+                        Mathf.Max(0, 5f, scale.x + (random.Next(-1, 1) * chaos)));
+                } else {
+                    boxcollider.gameObject.transform.localScale = new Vector3(
+                        Mathf.Max(1, scale.x + random.Next(-1 * (int)chaos, 1 * (int)chaos)),
+                        Mathf.Max(1, scale.y + random.Next(-1 * (int)chaos, 1 * (int)chaos)), 
+                        Mathf.Max(1, scale.z + random.Next(-1 * (int)chaos, 1 * (int)chaos)));
+                }
+            }
+            if (randomSwapWalls && RandomChanceWithChaos(2)) {
+                BoxCollider selSpawnBoxCollider = groundColliders[random.Next(0, groundColliders.Count)];
+                Vector3 temp = boxcollider.transform.position;
+                boxcollider.transform.position = selSpawnBoxCollider.transform.position;
+                selSpawnBoxCollider.transform.position = temp;
+                if (!legacyBug) {
+                    selSpawnBoxCollider.enabled = false;
+                    selSpawnBoxCollider.enabled = true;
+                }
+            }
+            if (!legacyBug) {
+                boxcollider.enabled = false;
+                boxcollider.enabled = true;
+            }
+        }
+
+        private void CreateCompass() {
+            GameObject gm = new GameObject();
+            compassLineRenderer = gm.AddComponent<LineRenderer>();
+            compassLineRenderer.useWorldSpace = true;
+            compassLineRenderer.startColor = Color.green;
+            compassLineRenderer.endColor = Color.blue;
+            compassLineRenderer.SetPosition(0, player.transform.position);
+            compassLineRenderer.SetPosition(1, milk.transform.position);
+            compassLineRenderer.startWidth = 0.1f;
+            compassLineRenderer.endWidth = 0.2f;
+            compassLineRenderer.receiveShadows = false;
+            compassLineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            compassLineRenderer.material = new Material(Shader.Find("Particles/Standard Unlit"));
+            compassLineRenderer.material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            compassLineRenderer.material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            compassLineRenderer.material.SetInt("_ZWrite", 0);
+            compassLineRenderer.material.DisableKeyword("_ALPHATEST_ON");
+            compassLineRenderer.material.EnableKeyword("_ALPHABLEND_ON");
+            compassLineRenderer.material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            compassLineRenderer.material.renderQueue = 3000;
+            compassLineRenderer.material.SetColor("_Color", new Color(1f, 1f, 1f, 0.3f));
+            compassLineRenderer.numCapVertices = 4;
+        }
+
+        private void PickRandomStartWeapon() {
+            if (PlayerMovement.Instance.spawnWeapon != null) {
+                Object.Destroy(PlayerMovement.Instance.spawnWeapon);
+            }
+            switch (random.Next(18)) {
+                case 0:
+                case 1:
+                case 2:
+                case 4:
+                case 5:
+                    PlayerMovement.Instance.spawnWeapon = null;
+                    break;
+                case 6:
+                case 7:
+                case 8:
+                case 9:
+                    PlayerMovement.Instance.spawnWeapon = LoadsonAPI.PrefabManager.NewPistol();
+                    break;
+                case 10:
+                case 11:
+                case 12:
+                case 13:
+                    PlayerMovement.Instance.spawnWeapon = LoadsonAPI.PrefabManager.NewAk47();
+                    break;
+                case 14:
+                case 15:
+                    PlayerMovement.Instance.spawnWeapon = LoadsonAPI.PrefabManager.NewShotgun();
+                    break;
+                case 16:
+                    PlayerMovement.Instance.spawnWeapon = LoadsonAPI.PrefabManager.NewGrappler();
+                    break;
+                case 17:
+                    PlayerMovement.Instance.spawnWeapon = LoadsonAPI.PrefabManager.NewBoomer();
+                    break;
+            }
+        }
+
+
+        private bool RandomChanceWithChaos(float div=1) {
             return random.NextDouble() < Mathf.Lerp(0.1f, 1f, Mathf.Min(1, chaos / 25f))/div;
         }
 
-        private void tryDoRandomPosForObject(List<BoxCollider> groundColliders, Transform t, Func<bool> f) {
+        private void TryDoRandomPosForObject(List<BoxCollider> groundColliders, Transform t, Func<bool> f) {
             bool hasWorked;
             int tries = 0;
             do {
-                hasWorked = doRandomPosForObject(groundColliders, t);
+                hasWorked = DoRandomPosForObject(groundColliders, t);
                 if (++tries > maxTries) break;
             } while (!hasWorked|| f());
         }
 
-        private void tryDoRandomPosForObject(List<BoxCollider> groundColliders,Transform t) {
+        private void TryDoRandomPosForObject(List<BoxCollider> groundColliders,Transform t) {
             bool hasWorked;
             int tries = 0;
             do {
-                hasWorked = doRandomPosForObject(groundColliders, t);
+                hasWorked = DoRandomPosForObject(groundColliders, t);
                 if (++tries > maxTries) break;
             } while (!hasWorked);
         }
 
 
 
-        private bool doRandomPosForObject(List<BoxCollider> groundColliders,Transform t) {
+        private bool DoRandomPosForObject(List<BoxCollider> groundColliders,Transform t) {
             BoxCollider selSpawnBoxCollider = groundColliders[random.Next(0, groundColliders.Count)];
             Vector3 newpos = selSpawnBoxCollider.gameObject.transform.position;
             float mag = selSpawnBoxCollider.gameObject.transform.localScale.magnitude;
@@ -542,47 +586,45 @@ namespace Jannik_Randomizer {
         }
 
 
-        private void createMarker(Vector3 pos) {
+        private void CreateMarker(Vector3 pos) {
             GameObject gm = LoadsonAPI.PrefabManager.NewCube();
             gm.transform.position = pos;
             gm.transform.localScale = Vector3.one * 0.5f;
             GameObject.DestroyImmediate(gm.GetComponent<BoxCollider>());
         }
 
-        private void createLine(Vector3 pos1,Vector3 pos2) {
+        private void CreateLine(Vector3 pos1,Vector3 pos2) {
             GameObject gm = new GameObject();
-            lineRenderer = gm.AddComponent<LineRenderer>();
-            lineRenderer.useWorldSpace = true;
-            lineRenderer.startColor = Color.white;
-            lineRenderer.endColor = Color.black;
-            lineRenderer.SetPosition(0, pos1);
-            lineRenderer.SetPosition(1, pos2);
-            lineRenderer.startWidth = 0.1f;
-            lineRenderer.endWidth = 0.1f;
-            lineRenderer.receiveShadows = false;
-            lineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
-            lineRenderer.material = new Material(Shader.Find("Particles/Standard Unlit"));
-            lineRenderer.material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
-            lineRenderer.material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
-            lineRenderer.material.SetInt("_ZWrite", 0);
-            lineRenderer.material.DisableKeyword("_ALPHATEST_ON");
-            lineRenderer.material.EnableKeyword("_ALPHABLEND_ON");
-            lineRenderer.material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
-            lineRenderer.material.renderQueue = 3000;
-            lineRenderer.numCapVertices = 4;
+            compassLineRenderer = gm.AddComponent<LineRenderer>();
+            compassLineRenderer.useWorldSpace = true;
+            compassLineRenderer.startColor = Color.white;
+            compassLineRenderer.endColor = Color.black;
+            compassLineRenderer.SetPosition(0, pos1);
+            compassLineRenderer.SetPosition(1, pos2);
+            compassLineRenderer.startWidth = 0.1f;
+            compassLineRenderer.endWidth = 0.1f;
+            compassLineRenderer.receiveShadows = false;
+            compassLineRenderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            compassLineRenderer.material = new Material(Shader.Find("Particles/Standard Unlit"));
+            compassLineRenderer.material.SetInt("_SrcBlend", (int)UnityEngine.Rendering.BlendMode.SrcAlpha);
+            compassLineRenderer.material.SetInt("_DstBlend", (int)UnityEngine.Rendering.BlendMode.OneMinusSrcAlpha);
+            compassLineRenderer.material.SetInt("_ZWrite", 0);
+            compassLineRenderer.material.DisableKeyword("_ALPHATEST_ON");
+            compassLineRenderer.material.EnableKeyword("_ALPHABLEND_ON");
+            compassLineRenderer.material.DisableKeyword("_ALPHAPREMULTIPLY_ON");
+            compassLineRenderer.material.renderQueue = 3000;
+            compassLineRenderer.numCapVertices = 4;
         }
-
-        Rect winrect = new Rect(80, 80, 600, 530);
         public override void OnGUI() {
             if (windowOpen) {
-                winrect = GUI.Window(windowID, winrect, mainWindow, "Randomizer Menu");
+                winrect = GUI.Window(windowID, winrect, MainWindow, "Randomizer Menu ("+version+")");
             }
+            GUI.Label(new Rect(0, Screen.height - 35, 400, 20), "Seed: "+seed);
             if (freeCamOn) {
                 GUI.Label(new Rect(10,Screen.height-60,400,20), "Free Cam Mode (Press 'Escape' to Exit)");
             }
         }
-
-        public void mainWindow(int id) {
+        private void MainWindow(int id) {
             GUI.DragWindow(new Rect(0, 0, 10000, 20));
             Rect r = new Rect(0, 0, 20, 20);
 
@@ -592,10 +634,10 @@ namespace Jannik_Randomizer {
             r.Set(10, 50, 200, r.height);
             string newSettingsString = GUI.TextField(r, settingsString);
             if(newSettingsString!= settingsString) {
-                if (tryParseSettingsString(newSettingsString)) {
+                if (TryParseSettingsString(newSettingsString)) {
                     settingsString = newSettingsString;
                 } else {
-                    createSettingsString();
+                    CreateSettingsString();
                 }
             }
 
@@ -609,16 +651,15 @@ namespace Jannik_Randomizer {
 
 
             r.Set(10, r.y+60, 80, r.height);
-            if (GUI.Button(r, "New Seed")) {
-                seed = UnityEngine.Random.Range(0, Int32.MaxValue);
-                createSettingsString();
+            if (GUI.Button(r, "Reseed")) {
+                Reseed();
             }
 
             r.Set(100, r.y, 80, r.height);
             string t = GUI.TextField(r, seed.ToString());
             if (int.TryParse(t, out int ti)) {
                 seed = ti;
-                createSettingsString();
+                CreateSettingsString();
             }
 
 
@@ -629,14 +670,14 @@ namespace Jannik_Randomizer {
             bool newrandomPosObjects = GUI.Toggle(r, randomPosWalls, "Random Position for Walls");
             if(newrandomPosObjects!= randomPosWalls) {
                 randomPosWalls = newrandomPosObjects;
-                createSettingsString();
+                CreateSettingsString();
             }
 
             r.Set(260, r.y - 3, 140, r.height);
             float newchaos = GUI.HorizontalSlider(r, chaos, 1f, 25.0f);
             if (newchaos != chaos) {
                 chaos = (float)Math.Round(newchaos);
-                createSettingsString();
+                CreateSettingsString();
             }
             r.Set(300, r.y + 6, 100, r.height);
             GUI.Label(r, "Chaos: " + chaos);
@@ -646,28 +687,28 @@ namespace Jannik_Randomizer {
             bool newrandomRotObjects = GUI.Toggle(r, randomRotWalls, "Random Rotation for Walls");
             if (newrandomRotObjects != randomRotWalls) {
                 randomRotWalls = newrandomRotObjects;
-                createSettingsString();
+                CreateSettingsString();
             }
 
             r.Set(260, r.y, 150, r.height);
             bool newSnapToGrid = GUI.Toggle(r, snapToGrid, "Grid Like Behaviour");
             if (newSnapToGrid != snapToGrid) {
                 snapToGrid = newSnapToGrid;
-                createSettingsString();
+                CreateSettingsString();
             }
 
             r.Set(10, r.y + 30, 240, r.height);
             bool newrandomScaleObjects = GUI.Toggle(r, randomScaleWalls, "Random Scale for Walls");
             if (newrandomScaleObjects != randomScaleWalls) {
                 randomScaleWalls = newrandomScaleObjects;
-                createSettingsString();
+                CreateSettingsString();
             }
 
             r.Set(260, r.y, 150, r.height);
             bool newrandomSwapObjects = GUI.Toggle(r, randomSwapWalls, "Swap Random Walls");
             if (newrandomSwapObjects != randomSwapWalls) {
                 randomSwapWalls = newrandomSwapObjects;
-                createSettingsString();
+                CreateSettingsString();
             }
 
 
@@ -677,35 +718,35 @@ namespace Jannik_Randomizer {
             bool newrandomPosProps = GUI.Toggle(r, randomPosProps, "Random Props Position");
             if (newrandomPosProps != randomPosProps) {
                 randomPosProps = newrandomPosProps;
-                createSettingsString();
+                CreateSettingsString();
             }
 
             r.Set(260, r.y, 240, r.height);
             bool newspawnRandomWalls = GUI.Toggle(r, spawnRandomWalls, "Spawn Random Walls");
             if (newspawnRandomWalls != spawnRandomWalls) {
                 spawnRandomWalls = newspawnRandomWalls;
-                createSettingsString();
+                CreateSettingsString();
             }
 
             r.Set(10, r.y + 30, 180, r.height);
             bool newrandomSpawn = GUI.Toggle(r, randomSpawn, "Random Spawn Position");
             if (newrandomSpawn != randomSpawn) {
                 randomSpawn = newrandomSpawn;
-                createSettingsString();
+                CreateSettingsString();
             }
 
             r.Set(10, r.y + 30, 150, r.height);
             bool newrandomGoal = GUI.Toggle(r, randomGoal, "Random Goal Position");
             if (newrandomGoal != randomGoal) {
                 randomGoal = newrandomGoal;
-                createSettingsString();
+                CreateSettingsString();
             }
 
             r.Set(10, r.y + 30, 240, r.height);
             bool newrandomStartWeapon = GUI.Toggle(r, randomStartWeapon, "Random Starter Weapon");
             if (newrandomStartWeapon != randomStartWeapon) {
                 randomStartWeapon = newrandomStartWeapon;
-                createSettingsString();
+                CreateSettingsString();
             }
 
 
@@ -714,40 +755,37 @@ namespace Jannik_Randomizer {
             bool newcompass = GUI.Toggle(r, compass, "Compass");
             if (newcompass != compass) {
                 compass = newcompass;
-                createSettingsString();
+                CreateSettingsString();
             }
 
             r.Set(260, r.y, 140, r.height);
-            bool newdemoncubed = GUI.Toggle(r, demoncubed, "Legacy Bug Toggle");
-            if (newdemoncubed != demoncubed) {
-                demoncubed = newdemoncubed;
-                maxTries = demoncubed ? 50 : 1000;
-                createSettingsString();
+            bool newdemoncubed = GUI.Toggle(r, legacyBug, "Legacy Bug Toggle");
+            if (newdemoncubed != legacyBug) {
+                legacyBug = newdemoncubed;
+                maxTries = legacyBug ? 50 : 1000;
+                CreateSettingsString();
             }
 
             r.Set(10, r.y+30, 80, r.height);
             if (GUI.Button(r, "Free Cam")) {
-                turnOnFreeCam();
+                TurnOnFreeCam();
             }
 
             
 
 
 
-            r.Set(10, r.y+60, 120, r.height);
-            if (GUI.Button(r, "Restart and Apply")) {
-                changeWindowOpen(false);
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-                Game.Instance.StartGame();
+            r.Set(10, r.y+60, 100, r.height);
+            if (GUI.Button(r, "Restart (R)")) {
+                ChangeWindowVisibility(false);
+                StartLevel(SceneManager.GetActiveScene().buildIndex);
             }
 
-            r.Set(140, r.y, 220, r.height);
-            if (GUI.Button(r, "Reseed, Restart and Apply")) {
-                seed = UnityEngine.Random.Range(0, Int32.MaxValue);
-                createSettingsString();
-                changeWindowOpen(false);
-                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
-                Game.Instance.StartGame();
+            r.Set(120, r.y, 180, r.height);
+            if (GUI.Button(r, "Reseed and Restart (K)")) {
+                Reseed();
+                ChangeWindowVisibility(false);
+                StartLevel(SceneManager.GetActiveScene().buildIndex);
             }
 
         }

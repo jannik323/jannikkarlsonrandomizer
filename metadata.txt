@@ -1,4 +1,4 @@
 displayname=Randomizer
 author=Jannik323
-description=This mods randomizes your game! Press "M" while playing to open the Randomizer menu.
+description=This mod randomizes your game! Press "M" while playing to open the Randomizer menu.
 deps=
