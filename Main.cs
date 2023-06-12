@@ -170,6 +170,14 @@ namespace Jannik_Randomizer {
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
                 Game.Instance.StartGame();
             }
+            if (Input.GetKeyDown(KeyCode.N))
+            {
+                seed = UnityEngine.Random.Range(0, Int32.MaxValue);
+                createSettingsString();
+                changeWindowOpen(false);
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                Game.Instance.StartGame();
+            }
         }
 
         private void turnOffFreeCam() {
@@ -730,6 +738,7 @@ namespace Jannik_Randomizer {
             if (GUI.Button(r, "Restart and Apply")) {
                 changeWindowOpen(false);
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                Game.Instance.StartGame();
             }
 
             r.Set(140, r.y, 220, r.height);
@@ -738,6 +747,7 @@ namespace Jannik_Randomizer {
                 createSettingsString();
                 changeWindowOpen(false);
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                Game.Instance.StartGame();
             }
 
         }
