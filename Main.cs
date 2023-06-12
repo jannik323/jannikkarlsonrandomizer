@@ -11,7 +11,7 @@ using UnityEngine.UI;
 
 namespace Jannik_Randomizer {
     public class Main : Mod {
-        private readonly string version = "v1.2";
+        private readonly string version = "v1.2.1";
         private readonly string settingsFormatVersion = "v1.1";
 
 
