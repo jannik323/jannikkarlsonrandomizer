@@ -109,6 +109,75 @@ namespace Jannik_Randomizer {
                 }
                 Look();
             }
+
+            if (Input.GetKeyDown(KeyCode.Alpha1))
+            {
+                SceneManager.LoadScene(2);
+                Game.Instance.StartGame();
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha2))
+            {
+                SceneManager.LoadScene(3);
+                Game.Instance.StartGame();
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha3))
+            {
+                SceneManager.LoadScene(4);
+                Game.Instance.StartGame();
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha4))
+            {
+                SceneManager.LoadScene(5);
+                Game.Instance.StartGame();
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha5))
+            {
+                SceneManager.LoadScene(6);
+                Game.Instance.StartGame();
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha6))
+            {
+                SceneManager.LoadScene(7);
+                Game.Instance.StartGame();
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha7))
+            {
+                SceneManager.LoadScene(8);
+                Game.Instance.StartGame();
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha8))
+            {
+                SceneManager.LoadScene(9);
+                Game.Instance.StartGame();
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha9))
+            {
+                SceneManager.LoadScene(10);
+                Game.Instance.StartGame();
+            }
+            if (Input.GetKeyDown(KeyCode.Alpha0))
+            {
+                SceneManager.LoadScene(11);
+                Game.Instance.StartGame();
+            }
+            if (Input.GetKeyDown(KeyCode.Minus))
+            {
+                SceneManager.LoadScene(12);
+                Game.Instance.StartGame();
+            }
+            if (Input.GetKeyDown(KeyCode.R))
+            {
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                Game.Instance.StartGame();
+            }
+            if (Input.GetKeyDown(KeyCode.N))
+            {
+                seed = UnityEngine.Random.Range(0, Int32.MaxValue);
+                createSettingsString();
+                changeWindowOpen(false);
+                SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                Game.Instance.StartGame();
+            }
         }
 
         private void turnOffFreeCam() {
@@ -123,7 +192,9 @@ namespace Jannik_Randomizer {
         private void turnOnFreeCam() {
             freeCamOn = true;
             freeCam.gameObject.SetActive(true);
-            freeCam.gameObject.transform.position = player.transform.position;
+            freeCam.gameObject.transform.position = PlayerMovement.Instance.playerCam.transform.position;
+            freeCam.gameObject.transform.rotation = PlayerMovement.Instance.playerCam.transform.rotation;
+            freeCam.fieldOfView = SaveManager.Instance.state.fov;
             changeWindowOpen(false);
             lastTimeScale = Time.timeScale;
             Time.timeScale = 0;
@@ -667,6 +738,7 @@ namespace Jannik_Randomizer {
             if (GUI.Button(r, "Restart and Apply")) {
                 changeWindowOpen(false);
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                Game.Instance.StartGame();
             }
 
             r.Set(140, r.y, 220, r.height);
@@ -675,6 +747,7 @@ namespace Jannik_Randomizer {
                 createSettingsString();
                 changeWindowOpen(false);
                 SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+                Game.Instance.StartGame();
             }
 
         }
