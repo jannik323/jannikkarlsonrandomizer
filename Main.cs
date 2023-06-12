@@ -509,7 +509,7 @@ namespace Jannik_Randomizer {
 
         private void PickRandomStartWeapon() {
             if (PlayerMovement.Instance.spawnWeapon != null) {
-                Object.Destroy(PlayerMovement.Instance.spawnWeapon);
+                Object.DestroyImmediate(PlayerMovement.Instance.spawnWeapon);
             }
             switch (random.Next(18)) {
                 case 0:
