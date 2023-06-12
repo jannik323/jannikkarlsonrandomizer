@@ -58,6 +58,8 @@ namespace Jannik_Randomizer {
         private GameObject player;
         private GameObject milk;
 
+        private GameObject debugConsole;
+
         public override void OnEnable() {
             SceneManager.sceneLoaded += SceneManager_sceneLoaded;
 
@@ -93,10 +95,10 @@ namespace Jannik_Randomizer {
         }
 
         public override void Update(float deltaTime) {
-            if(!freeCamOn && Input.GetKeyDown(KeyCode.M)){
+            if(!freeCamOn && !debugConsole.activeSelf &&Input.GetKeyDown(KeyCode.M)){
                 ChangeWindowVisibility(!windowOpen);
             }
-            if (freeCamOn && Input.GetKeyDown(KeyCode.Escape)) {
+            if (freeCamOn && !debugConsole.activeSelf && Input.GetKeyDown(KeyCode.Escape)) {
                 TurnOffFreeCam();
             }
             if (windowOpen) {
@@ -104,6 +106,10 @@ namespace Jannik_Randomizer {
             }
             if (compass) {
                 compassLineRenderer.SetPosition(0, player.transform.position);
+            }
+
+            if (debugConsole.activeSelf) {
+                return;
             }
 
             if (freeCamOn&&!windowOpen) {
@@ -144,11 +150,13 @@ namespace Jannik_Randomizer {
                 StartLevel(12);
             }
             if (Input.GetKeyDown(KeyCode.R)) {
+                if (SceneManager.GetActiveScene().buildIndex == 1) return;
                 StartLevel(SceneManager.GetActiveScene().buildIndex);
             }
             if (Input.GetKeyDown(KeyCode.K)) {
                 Reseed();
                 ChangeWindowVisibility(false);
+                if (SceneManager.GetActiveScene().buildIndex == 1) return;
                 StartLevel(SceneManager.GetActiveScene().buildIndex);
             }
         }
@@ -160,7 +168,6 @@ namespace Jannik_Randomizer {
 
         private void StartLevel(int index) {
             SceneManager.LoadScene(index);
-            if (index == 1) return;
             Game.Instance.StartGame();
         }
 
@@ -308,17 +315,22 @@ namespace Jannik_Randomizer {
             rect.offsetMax = new Vector2(0, 0);
             rect.sizeDelta = new Vector2(0, 0);
         }
-
         private void SceneManager_sceneLoaded(Scene scene,LoadSceneMode loadSceneMode) {
             freeCamOn = false;
-
+            
             // fetch default ground material for random spawned walls to use
-            if (scene.buildIndex == 1 && groundMaterial == null) {
-                groundMaterial = GameObject.FindObjectOfType<MeshRenderer>().material;
+            if (scene.buildIndex == 1) {
+                if(groundMaterial == null) {
+                    groundMaterial = GameObject.FindObjectOfType<MeshRenderer>().material;
+                }
+                if (blockPanel==null) {
+                    CreateBlockPanel();
+                }
                 return;
             }
+            blockPanel.SetActive(false);
 
-            CreateBlockPanel();
+            debugConsole = GameObject.FindObjectOfType<Debug>().console.gameObject;
 
             if (scene.buildIndex < 2) return;
 
@@ -778,14 +790,18 @@ namespace Jannik_Randomizer {
             r.Set(10, r.y+60, 100, r.height);
             if (GUI.Button(r, "Restart (R)")) {
                 ChangeWindowVisibility(false);
-                StartLevel(SceneManager.GetActiveScene().buildIndex);
+                if (SceneManager.GetActiveScene().buildIndex != 1) {
+                    StartLevel(SceneManager.GetActiveScene().buildIndex);
+                };
             }
 
             r.Set(120, r.y, 180, r.height);
             if (GUI.Button(r, "Reseed and Restart (K)")) {
                 Reseed();
                 ChangeWindowVisibility(false);
-                StartLevel(SceneManager.GetActiveScene().buildIndex);
+                if (SceneManager.GetActiveScene().buildIndex != 1) {
+                    StartLevel(SceneManager.GetActiveScene().buildIndex);
+                };
             }
 
         }
