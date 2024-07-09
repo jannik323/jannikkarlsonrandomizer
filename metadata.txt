@@ -1,4 +1,4 @@
 displayname=Randomizer
 author=Jannik323
-description=This mod randomizes your game! Press "M" while playing to open the Randomizer menu.
+description=This mod randomizes your game! Press "M" while playing to open the Randomizer menu.\n\nNumber keys (and minus) + left Alt to quickly switch between levels.\nW,A,S,D,Q,E to move while in freecam.\nPressing R quickly resets and K resets and reseeds.
 deps=

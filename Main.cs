@@ -11,7 +11,7 @@ using UnityEngine.UI;
 
 namespace Jannik_Randomizer {
     public class Main : Mod {
-        private readonly string version = "v1.2.1";
+        private readonly string version = "v1.2.2";
         private readonly string settingsFormatVersion = "v1.1";
 
 
@@ -116,39 +116,44 @@ namespace Jannik_Randomizer {
                 UpdateFreeCam();
             }
 
-            if (Input.GetKeyDown(KeyCode.Alpha1)) {
-                StartLevel(2);
+            if (Input.GetKey(KeyCode.LeftAlt)) {
+
+                if (Input.GetKeyDown(KeyCode.Alpha1)) {
+                    StartLevel(2);
+                }
+                if (Input.GetKeyDown(KeyCode.Alpha2)) {
+                    StartLevel(3);
+                }
+                if (Input.GetKeyDown(KeyCode.Alpha3)) {
+                    StartLevel(4);
+                }
+                if (Input.GetKeyDown(KeyCode.Alpha4)) {
+                    StartLevel(5);
+                }
+                if (Input.GetKeyDown(KeyCode.Alpha5)) {
+                    StartLevel(6);
+                }
+                if (Input.GetKeyDown(KeyCode.Alpha6)) {
+                    StartLevel(7);
+                }
+                if (Input.GetKeyDown(KeyCode.Alpha7)) {
+                    StartLevel(8);
+                }
+                if (Input.GetKeyDown(KeyCode.Alpha8)) {
+                    StartLevel(9);
+                }
+                if (Input.GetKeyDown(KeyCode.Alpha9)) {
+                    StartLevel(10);
+                }
+                if (Input.GetKeyDown(KeyCode.Alpha0)) {
+                    StartLevel(11);
+                }
+                if (Input.GetKeyDown(KeyCode.Minus)) {
+                    StartLevel(12);
+                }
+
             }
-            if (Input.GetKeyDown(KeyCode.Alpha2)) {
-                StartLevel(3);
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha3)) {
-                StartLevel(4);
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha4)) {
-                StartLevel(5);
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha5)) {
-                StartLevel(6);
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha6)) {
-                StartLevel(7);
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha7)) {
-                StartLevel(8);
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha8)) {
-                StartLevel(9);
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha9)) {
-                StartLevel(10);
-            }
-            if (Input.GetKeyDown(KeyCode.Alpha0)) {
-                StartLevel(11);
-            }
-            if (Input.GetKeyDown(KeyCode.Minus)) {
-                StartLevel(12);
-            }
+
             if (Input.GetKeyDown(KeyCode.R)) {
                 if (SceneManager.GetActiveScene().buildIndex == 1) return;
                 StartLevel(SceneManager.GetActiveScene().buildIndex);
